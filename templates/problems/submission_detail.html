@@ -1,0 +1,154 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}提交详情 #{{ submission.id }} - Online Judge System{% endblock %}
+
+{% block extra_js %}
+<script>
+// 自动刷新页面（如果状态是 Pending 或 Judging）
+{% if submission.status == 'Pending' or submission.status == 'Judging' %}
+setTimeout(function() {
+    location.reload();
+}, 2000);  // 2秒后刷新
+{% endif %}
+</script>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    pre {
+        background-color: #f8f9fa;
+        border: 1px solid #dee2e6;
+        border-radius: 0.25rem;
+        padding: 1rem;
+        overflow-x: auto;
+    }
+    .status-icon {
+        font-size: 3rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- 返回按钮 -->
+<div class="mb-3">
+    <a href="{% url 'problems:problem_detail' submission.problem.id %}" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-arrow-left"></i> 返回题目
+    </a>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <!-- 提交信息 -->
+        <div class="card mb-3">
+            <div class="card-header">
+                <h5><i class="bi bi-info-circle"></i> 提交信息</h5>
+            </div>
+            <div class="card-body">
+                <table class="table table-borderless mb-0">
+                    <tr>
+                        <th style="width: 120px;">提交编号:</th>
+                        <td>#{{ submission.id }}</td>
+                    </tr>
+                    <tr>
+                        <th>题目:</th>
+                        <td>
+                            <a href="{% url 'problems:problem_detail' submission.problem.id %}">
+                                {{ submission.problem.id }}. {{ submission.problem.title }}
+                            </a>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>用户:</th>
+                        <td>{{ submission.user.username }}</td>
+                    </tr>
+                    <tr>
+                        <th>语言:</th>
+                        <td>{{ submission.language }}</td>
+                    </tr>
+                    <tr>
+                        <th>提交时间:</th>
+                        <td>{{ submission.created_at|date:"Y-m-d H:i:s" }}</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+
+        <!-- 代码 -->
+        <div class="card mb-3">
+            <div class="card-header">
+                <h5><i class="bi bi-code-slash"></i> 提交代码</h5>
+            </div>
+            <div class="card-body">
+                <pre><code>{{ submission.code }}</code></pre>
+            </div>
+        </div>
+
+        <!-- 错误信息 -->
+        {% if submission.error_info %}
+        <div class="card mb-3">
+            <div class="card-header bg-danger text-white">
+                <h5><i class="bi bi-exclamation-triangle"></i> 错误信息</h5>
+            </div>
+            <div class="card-body">
+                <pre class="text-danger mb-0">{{ submission.error_info }}</pre>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="col-lg-4">
+        <!-- 评测结果 -->
+        <div class="card mb-3">
+            <div class="card-header">
+                <h5><i class="bi bi-clipboard-check"></i> 评测结果</h5>
+            </div>
+            <div class="card-body text-center">
+                <i class="bi bi-{{ submission.status_icon }} status-icon text-{{ submission.status_color }}"></i>
+                <h4 class="mt-3 text-{{ submission.status_color }}">
+                    {{ submission.get_status_display }}
+                </h4>
+                
+                {% if submission.status == 'Accepted' %}
+                <div class="mt-4">
+                    <div class="row">
+                        <div class="col-6">
+                            <div class="border rounded p-2">
+                                <small class="text-muted">运行时间</small>
+                                <h5 class="mb-0">{{ submission.time_used }}ms</h5>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="border rounded p-2">
+                                <small class="text-muted">内存使用</small>
+                                <h5 class="mb-0">{{ submission.memory_used|filesizeformat }}</h5>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
+                <div class="mt-3">
+                    <div class="border rounded p-2">
+                        <small class="text-muted">得分</small>
+                        <h5 class="mb-0">{{ submission.score }} 分</h5>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 测试用例结果（待实现） -->
+        <div class="card">
+            <div class="card-header">
+                <h6><i class="bi bi-list-check"></i> 测试用例</h6>
+            </div>
+            <div class="card-body">
+                <p class="text-muted text-center mb-0">
+                    <small>测试用例详情功能开发中...</small>
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

@@ -1,0 +1,204 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ problem.title }} - Online Judge System{% endblock %}
+
+{% block extra_css %}
+<style>
+    .problem-content {
+        font-size: 1.05rem;
+        line-height: 1.8;
+    }
+    .problem-content h3 {
+        margin-top: 1.5rem;
+        margin-bottom: 1rem;
+        font-size: 1.3rem;
+    }
+    .sample-box {
+        background-color: #f8f9fa;
+        border-left: 3px solid #007bff;
+        padding: 1rem;
+        margin: 1rem 0;
+    }
+    #code-editor {
+        font-family: 'Courier New', monospace;
+        font-size: 14px;
+        min-height: 400px;
+        border: 1px solid #dee2e6;
+        border-radius: 0.25rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- 返回按钮 -->
+<div class="mb-3">
+    <a href="{% url 'problems:problem_list' %}" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-arrow-left"></i> 返回题库
+    </a>
+</div>
+
+<div class="row">
+    <div class="col-lg-12">
+        <!-- 题目标题 -->
+        <div class="card mb-3">
+            <div class="card-body">
+                <h2 class="card-title">
+                    {{ problem.id }}. {{ problem.title }}
+                    <span class="badge bg-{{ problem.difficulty_color }} ms-2">
+                        {{ problem.get_difficulty_display }}
+                    </span>
+                </h2>
+                <div class="mt-3">
+                    <span class="me-3">
+                        <i class="bi bi-clock"></i> 时间限制: {{ problem.time_limit }}ms
+                    </span>
+                    <span class="me-3">
+                        <i class="bi bi-hdd"></i> 内存限制: {{ problem.memory_limit|filesizeformat }}
+                    </span>
+                    <span class="me-3">
+                        <i class="bi bi-bar-chart"></i> 通过率: {{ problem.acceptance_rate }}%
+                    </span>
+                </div>
+                <div class="mt-2">
+                    {% for tag in problem.tags.all %}
+                    <span class="badge bg-{{ tag.color }}">{{ tag.name }}</span>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <!-- 题目描述 -->
+        <div class="card mb-3">
+            <div class="card-body problem-content">
+                <h3><i class="bi bi-file-text"></i> 题目描述</h3>
+                <div>{{ problem.description|linebreaks }}</div>
+
+                <h3><i class="bi bi-box-arrow-in-down"></i> 输入格式</h3>
+                <div>{{ problem.input_format|linebreaks }}</div>
+
+                <h3><i class="bi bi-box-arrow-up"></i> 输出格式</h3>
+                <div>{{ problem.output_format|linebreaks }}</div>
+
+                <h3><i class="bi bi-lightbulb"></i> 样例</h3>
+                <div class="row">
+                    <div class="col-md-6">
+                        <strong>输入</strong>
+                        <div class="sample-box">
+                            <pre class="mb-0">{{ problem.sample_input }}</pre>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <strong>输出</strong>
+                        <div class="sample-box">
+                            <pre class="mb-0">{{ problem.sample_output }}</pre>
+                        </div>
+                    </div>
+                </div>
+
+                {% if problem.hint %}
+                <h3><i class="bi bi-info-circle"></i> 提示</h3>
+                <div class="alert alert-info">{{ problem.hint|linebreaks }}</div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- 代码提交区 -->
+        {% if user.is_authenticated %}
+        <div class="card mb-3">
+            <div class="card-header">
+                <h5><i class="bi bi-code-slash"></i> 提交代码</h5>
+            </div>
+            <div class="card-body">
+                <form method="post" action="{% url 'problems:submit_code' problem.id %}">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="language" class="form-label">选择语言</label>
+                        <select name="language" id="language" class="form-select" style="max-width: 200px;">
+                            <option value="C++">C++</option>
+                            <option value="Python" selected>Python</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="code-editor" class="form-label">代码编辑器</label>
+                        <textarea name="code" id="code-editor" class="form-control" rows="15" 
+                                  placeholder="# 在此输入你的代码..."></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-lg">
+                        <i class="bi bi-upload"></i> 提交代码
+                    </button>
+                    <button type="reset" class="btn btn-outline-secondary btn-lg">
+                        <i class="bi bi-arrow-clockwise"></i> 重置
+                    </button>
+                </form>
+            </div>
+        </div>
+        {% else %}
+        <div class="alert alert-warning">
+            <i class="bi bi-exclamation-triangle"></i>
+            请先 <a href="{% url 'users:login' %}?next={{ request.path }}" class="alert-link">登录</a> 
+            后提交代码
+        </div>
+        {% endif %}
+
+        <!-- 我的提交记录 -->
+        {% if user.is_authenticated and user_submissions %}
+        <div class="card mb-3">
+            <div class="card-header">
+                <h5><i class="bi bi-clock-history"></i> 我的提交记录</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-sm table-hover">
+                        <thead>
+                            <tr>
+                                <th>时间</th>
+                                <th>状态</th>
+                                <th>语言</th>
+                                <th>运行时间</th>
+                                <th>内存</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for submission in user_submissions %}
+                            <tr>
+                                <td><small>{{ submission.created_at|date:"m-d H:i" }}</small></td>
+                                <td>
+                                    <span class="badge bg-{{ submission.status_color }}">
+                                        {{ submission.get_status_display }}
+                                    </span>
+                                </td>
+                                <td>{{ submission.language }}</td>
+                                <td>
+                                    {% if submission.time_used %}
+                                        {{ submission.time_used }}ms
+                                    {% else %}
+                                        -
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if submission.memory_used %}
+                                        {{ submission.memory_used|filesizeformat }}
+                                    {% else %}
+                                        -
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <a href="{% url 'problems:submission_detail' submission.id %}" 
+                                       class="btn btn-sm btn-outline-primary">
+                                        查看详情
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+

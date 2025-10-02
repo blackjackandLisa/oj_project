@@ -1,0 +1,76 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}首页 - Online Judge System{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<div class="text-center py-5">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <i class="bi bi-code-square display-1 text-primary mb-4"></i>
+                <h1 class="display-4 fw-bold mb-3">Online Judge System</h1>
+                <p class="lead text-muted mb-4">
+                    在线编程练习平台 - 提升编程技能，挑战算法题目
+                </p>
+                
+                {% if user.is_authenticated %}
+                <div class="d-grid gap-2 d-sm-flex justify-content-sm-center">
+                    <a href="{% url 'problems:problem_list' %}" class="btn btn-primary btn-lg px-4">
+                        <i class="bi bi-journal-code"></i> 开始刷题
+                    </a>
+                    <a href="{% url 'users:profile' %}" class="btn btn-outline-secondary btn-lg px-4">
+                        <i class="bi bi-person"></i> 个人中心
+                    </a>
+                </div>
+                {% else %}
+                <div class="d-grid gap-2 d-sm-flex justify-content-sm-center">
+                    <a href="{% url 'users:register' %}" class="btn btn-primary btn-lg px-4">
+                        <i class="bi bi-person-plus"></i> 立即注册
+                    </a>
+                    <a href="{% url 'users:login' %}" class="btn btn-outline-secondary btn-lg px-4">
+                        <i class="bi bi-box-arrow-in-right"></i> 立即登录
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Features Section -->
+<div class="container py-5">
+    <div class="row text-center g-4">
+        <div class="col-md-4">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body p-4">
+                    <i class="bi bi-journal-code display-4 text-primary mb-3"></i>
+                    <h5 class="card-title">丰富题库</h5>
+                    <p class="card-text text-muted">涵盖算法、数据结构等多个领域</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body p-4">
+                    <i class="bi bi-trophy display-4 text-warning mb-3"></i>
+                    <h5 class="card-title">在线比赛</h5>
+                    <p class="card-text text-muted">参加比赛，与他人一较高下</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body p-4">
+                    <i class="bi bi-lightning display-4 text-success mb-3"></i>
+                    <h5 class="card-title">即时评测</h5>
+                    <p class="card-text text-muted">快速判题，实时反馈结果</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+

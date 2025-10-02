@@ -1,0 +1,171 @@
+services:
+  # PostgreSQL Database
+  db:
+    image: postgres:15-alpine
+    container_name: oj_postgres
+    environment:
+      POSTGRES_DB: oj_database
+      POSTGRES_USER: oj_user
+      POSTGRES_PASSWORD: oj_password_2024
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - oj_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U oj_user"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis for Celery
+  redis:
+    image: redis:7-alpine
+    container_name: oj_redis
+    ports:
+      - "6379:6379"
+    networks:
+      - oj_network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Django Web Application
+  web:
+    build: .
+    container_name: oj_web
+    command: python manage.py runserver 0.0.0.0:8000
+    volumes:
+      - .:/app
+      - static_volume:/app/staticfiles
+      - media_volume:/app/media
+      - /var/run/docker.sock:/var/run/docker.sock  # Docker socket for judge
+    ports:
+      - "8000:8000"
+    environment:
+      - DEBUG=1
+      - SECRET_KEY=django-insecure-dev-key-change-in-production
+      - DB_NAME=oj_database
+      - DB_USER=oj_user
+      - DB_PASSWORD=oj_password_2024
+      - DB_HOST=db
+      - DB_PORT=5432
+      - REDIS_URL=redis://redis:6379/0
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - oj_network
+
+  # Celery Worker for Judge System
+  celery:
+    build: .
+    container_name: oj_celery
+    command: celery -A oj_project worker -l info
+    volumes:
+      - .:/app
+      - /var/run/docker.sock:/var/run/docker.sock  # Docker socket for judge
+    environment:
+      - DEBUG=1
+      - SECRET_KEY=django-insecure-dev-key-change-in-production
+      - DB_NAME=oj_database
+      - DB_USER=oj_user
+      - DB_PASSWORD=oj_password_2024
+      - DB_HOST=db
+      - DB_PORT=5432
+      - REDIS_URL=redis://redis:6379/0
+    depends_on:
+      - db
+      - redis
+    networks:
+      - oj_network
+
+  # Celery Beat for Scheduled Tasks
+  celery-beat:
+    build: .
+    container_name: oj_celery_beat
+    command: celery -A oj_project beat -l info
+    volumes:
+      - .:/app
+    environment:
+      - DEBUG=1
+      - SECRET_KEY=django-insecure-dev-key-change-in-production
+      - DB_NAME=oj_database
+      - DB_USER=oj_user
+      - DB_PASSWORD=oj_password_2024
+      - DB_HOST=db
+      - DB_PORT=5432
+      - REDIS_URL=redis://redis:6379/0
+    depends_on:
+      - db
+      - redis
+    networks:
+      - oj_network
+
+  # Judger0 Server
+  judge0-server:
+    image: judge0/judge0:1.13.0
+    container_name: oj_judge0_server
+    volumes:
+      - judge0_tmp:/tmp
+      - judge0_box:/box
+    ports:
+      - "2358:2358"
+    privileged: true
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - POSTGRES_HOST=db
+      - POSTGRES_PORT=5432
+      - POSTGRES_DB=judge0
+      - POSTGRES_USER=oj_user
+      - POSTGRES_PASSWORD=oj_password_2024
+    depends_on:
+      - db
+      - redis
+    networks:
+      - oj_network
+    restart: unless-stopped
+
+  # Judger0 Workers
+  judge0-workers:
+    image: judge0/judge0:1.13.0
+    container_name: oj_judge0_workers
+    command: ["./scripts/workers"]
+    volumes:
+      - judge0_tmp:/tmp
+      - judge0_box:/box
+    privileged: true
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - POSTGRES_HOST=db
+      - POSTGRES_PORT=5432
+      - POSTGRES_DB=judge0
+      - POSTGRES_USER=oj_user
+      - POSTGRES_PASSWORD=oj_password_2024
+    depends_on:
+      - db
+      - redis
+      - judge0-server
+    networks:
+      - oj_network
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  static_volume:
+  media_volume:
+  judge0_tmp:
+  judge0_box:
+
+networks:
+  oj_network:
+    driver: bridge
+
+

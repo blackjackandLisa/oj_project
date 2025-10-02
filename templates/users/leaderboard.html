@@ -1,0 +1,212 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}排行榜 - Online Judge System{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- 页面标题 -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <h2><i class="bi bi-trophy-fill text-warning"></i> 全站排行榜</h2>
+            <p class="text-muted">根据解决题目数量和积分排序</p>
+        </div>
+    </div>
+    
+    <!-- 统计卡片 -->
+    <div class="row mb-4">
+        <div class="col-md-2 mb-3">
+            <div class="card h-100 text-center border-primary">
+                <div class="card-body">
+                    <i class="bi bi-people-fill text-primary fs-1"></i>
+                    <h3 class="mt-2">{{ total_users }}</h3>
+                    <p class="text-muted mb-0">总用户数</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2 mb-3">
+            <div class="card h-100 text-center border-success">
+                <div class="card-body">
+                    <i class="bi bi-file-earmark-code text-success fs-1"></i>
+                    <h3 class="mt-2">{{ total_problems }}</h3>
+                    <p class="text-muted mb-0">题目总数</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2 mb-3">
+            <div class="card h-100 text-center border-info">
+                <div class="card-body">
+                    <i class="bi bi-check-circle text-success fs-1"></i>
+                    <h3 class="mt-2">{{ easy_problems }}</h3>
+                    <p class="text-muted mb-0">简单题</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2 mb-3">
+            <div class="card h-100 text-center border-warning">
+                <div class="card-body">
+                    <i class="bi bi-dash-circle text-warning fs-1"></i>
+                    <h3 class="mt-2">{{ medium_problems }}</h3>
+                    <p class="text-muted mb-0">中等题</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2 mb-3">
+            <div class="card h-100 text-center border-danger">
+                <div class="card-body">
+                    <i class="bi bi-x-circle text-danger fs-1"></i>
+                    <h3 class="mt-2">{{ hard_problems }}</h3>
+                    <p class="text-muted mb-0">困难题</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2 mb-3">
+            <div class="card h-100 text-center border-secondary">
+                <div class="card-body">
+                    <i class="bi bi-send-check text-secondary fs-1"></i>
+                    <h3 class="mt-2">{{ total_submissions }}</h3>
+                    <p class="text-muted mb-0">总提交数</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 排行榜表格 -->
+    <div class="card">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0"><i class="bi bi-list-ol"></i> 用户排名</h5>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th width="80">排名</th>
+                            <th>用户名</th>
+                            <th width="120" class="text-center">积分</th>
+                            <th width="120" class="text-center">解决题数</th>
+                            <th width="100" class="text-center">简单</th>
+                            <th width="100" class="text-center">中等</th>
+                            <th width="100" class="text-center">困难</th>
+                            <th width="120" class="text-center">提交数</th>
+                            <th width="120" class="text-center">通过率</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for profile in page_obj %}
+                        <tr class="{% if user.is_authenticated and profile.user == user %}table-primary{% endif %}">
+                            <td>
+                                <span class="badge {% if profile.rank == 1 %}bg-warning text-dark{% elif profile.rank == 2 %}bg-secondary{% elif profile.rank == 3 %}bg-danger{% else %}bg-light text-dark{% endif %} fs-6">
+                                    {% if profile.rank == 1 %}
+                                        <i class="bi bi-trophy-fill"></i> {{ profile.rank }}
+                                    {% elif profile.rank == 2 %}
+                                        <i class="bi bi-trophy"></i> {{ profile.rank }}
+                                    {% elif profile.rank == 3 %}
+                                        <i class="bi bi-trophy"></i> {{ profile.rank }}
+                                    {% else %}
+                                        {{ profile.rank }}
+                                    {% endif %}
+                                </span>
+                            </td>
+                            <td>
+                                <strong>{{ profile.user.username }}</strong>
+                                {% if profile.school %}
+                                    <br><small class="text-muted">{{ profile.school }}</small>
+                                {% endif %}
+                            </td>
+                            <td class="text-center">
+                                <span class="badge bg-primary">{{ profile.rating }}</span>
+                            </td>
+                            <td class="text-center">
+                                <strong class="text-success">{{ profile.total_solved }}</strong>
+                            </td>
+                            <td class="text-center">
+                                <span class="badge bg-success">{{ profile.easy_solved }}</span>
+                            </td>
+                            <td class="text-center">
+                                <span class="badge bg-warning">{{ profile.medium_solved }}</span>
+                            </td>
+                            <td class="text-center">
+                                <span class="badge bg-danger">{{ profile.hard_solved }}</span>
+                            </td>
+                            <td class="text-center">{{ profile.total_submissions }}</td>
+                            <td class="text-center">
+                                {% if profile.acceptance_rate > 0 %}
+                                    <span class="{% if profile.acceptance_rate >= 50 %}text-success{% elif profile.acceptance_rate >= 30 %}text-warning{% else %}text-danger{% endif %}">
+                                        {{ profile.acceptance_rate }}%
+                                    </span>
+                                {% else %}
+                                    <span class="text-muted">-</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="9" class="text-center py-5 text-muted">
+                                <i class="bi bi-inbox fs-1"></i>
+                                <p class="mt-3">暂无用户数据</p>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <!-- 分页 -->
+        {% if page_obj.has_other_pages %}
+        <div class="card-footer">
+            <nav aria-label="排行榜分页">
+                <ul class="pagination justify-content-center mb-0">
+                    {% if page_obj.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page=1">首页</a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.previous_page_number }}">上一页</a>
+                        </li>
+                    {% else %}
+                        <li class="page-item disabled">
+                            <span class="page-link">首页</span>
+                        </li>
+                        <li class="page-item disabled">
+                            <span class="page-link">上一页</span>
+                        </li>
+                    {% endif %}
+                    
+                    <li class="page-item active">
+                        <span class="page-link">
+                            第 {{ page_obj.number }} / {{ page_obj.paginator.num_pages }} 页
+                        </span>
+                    </li>
+                    
+                    {% if page_obj.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.next_page_number }}">下一页</a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}">末页</a>
+                        </li>
+                    {% else %}
+                        <li class="page-item disabled">
+                            <span class="page-link">下一页</span>
+                        </li>
+                        <li class="page-item disabled">
+                            <span class="page-link">末页</span>
+                        </li>
+                    {% endif %}
+                </ul>
+            </nav>
+        </div>
+        {% endif %}
+    </div>
+    
+    <!-- 提示信息 -->
+    <div class="alert alert-info mt-4">
+        <i class="bi bi-info-circle"></i>
+        <strong>排名规则：</strong>
+        排名按照解决题目数量优先，积分其次。通过率仅供参考。
+    </div>
+</div>
+{% endblock %}
+

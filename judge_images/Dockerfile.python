@@ -1,0 +1,25 @@
+# Python判题镜像
+# 精简、安全的Python运行环境
+
+FROM python:3.11-alpine
+
+# 设置工作目录
+WORKDIR /judge
+
+# 创建非特权用户
+RUN adduser -D -u 1001 judger && \
+    chown -R judger:judger /judge
+
+# 切换到非特权用户
+USER judger
+
+# 设置环境变量
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1
+
+# 健康检查
+HEALTHCHECK NONE
+
+# 默认命令（会被覆盖）
+CMD ["python3"]
+

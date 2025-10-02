@@ -1,0 +1,50 @@
+# Django and Core Dependencies
+Django==4.2.7
+djangorestframework==3.14.0
+django-cors-headers==4.3.1
+django-filter==23.5
+
+# Database
+psycopg2-binary==2.9.9
+
+# Authentication & Security
+djangorestframework-simplejwt==5.3.1
+django-allauth==0.57.0
+
+# Environment Variables
+python-decouple==3.8
+
+# API Documentation
+drf-yasg==1.21.7
+
+# Celery for Async Tasks (for judge system)
+celery==5.3.4
+redis==5.0.1
+
+# Testing
+pytest==7.4.3
+pytest-django==4.7.0
+pytest-cov==4.1.0
+
+# Code Quality
+flake8==6.1.0
+black==23.12.0
+
+# Utilities
+Pillow==10.1.0
+python-dateutil==2.8.2
+pytz==2023.3
+
+# WSGI Server
+gunicorn==21.2.0
+
+# Monitoring
+django-debug-toolbar==4.2.0
+psutil==5.9.8
+
+# Docker for Judge System (用于阶段2 Docker判题，Linux环境推荐)
+docker==6.1.3
+requests-unixsocket==0.3.0
+urllib3<2.0.0  # Docker SDK 兼容性要求
+
+

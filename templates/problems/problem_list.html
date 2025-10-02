@@ -1,0 +1,229 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}题库 - Online Judge System{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-8">
+        <h2><i class="bi bi-journal-code"></i> 题库</h2>
+        <p class="text-muted">
+            共 {{ total_count }} 道题目
+            {% if user.is_authenticated %}
+                · 已解决 <span class="text-success fw-bold">{{ solved_count }}</span> 题
+            {% endif %}
+        </p>
+    </div>
+    <div class="col-md-4 text-end">
+        <a href="?{% if current_difficulty %}difficulty={{ current_difficulty }}&{% endif %}{% if current_tag %}tag={{ current_tag }}&{% endif %}{% if search_query %}search={{ search_query }}&{% endif %}" 
+           class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-clockwise"></i> 重置筛选
+        </a>
+    </div>
+</div>
+
+<!-- 筛选栏 -->
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="get" class="row g-3" id="filterForm">
+            <!-- 难度筛选 -->
+            <div class="col-md-2">
+                <label class="form-label"><i class="bi bi-speedometer2"></i> 难度</label>
+                <select name="difficulty" class="form-select">
+                    <option value="">全部</option>
+                    <option value="Easy" {% if current_difficulty == 'Easy' %}selected{% endif %}>简单</option>
+                    <option value="Medium" {% if current_difficulty == 'Medium' %}selected{% endif %}>中等</option>
+                    <option value="Hard" {% if current_difficulty == 'Hard' %}selected{% endif %}>困难</option>
+                </select>
+            </div>
+            
+            <!-- 标签筛选 -->
+            <div class="col-md-2">
+                <label class="form-label"><i class="bi bi-tags"></i> 标签</label>
+                <select name="tag" class="form-select">
+                    <option value="">全部</option>
+                    {% for tag in tags %}
+                    <option value="{{ tag.name }}" {% if current_tag == tag.name %}selected{% endif %}>
+                        {{ tag.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <!-- 状态筛选（仅登录用户） -->
+            {% if user.is_authenticated %}
+            <div class="col-md-2">
+                <label class="form-label"><i class="bi bi-check-circle"></i> 状态</label>
+                <select name="status" class="form-select">
+                    <option value="">全部</option>
+                    <option value="solved" {% if current_status == 'solved' %}selected{% endif %}>已解决</option>
+                    <option value="attempted" {% if current_status == 'attempted' %}selected{% endif %}>尝试过</option>
+                    <option value="not_attempted" {% if current_status == 'not_attempted' %}selected{% endif %}>未尝试</option>
+                </select>
+            </div>
+            {% endif %}
+            
+            <!-- 排序 -->
+            <div class="col-md-2">
+                <label class="form-label"><i class="bi bi-sort-down"></i> 排序</label>
+                <select name="order_by" class="form-select">
+                    <option value="id" {% if current_order == 'id' %}selected{% endif %}>题号升序</option>
+                    <option value="-id" {% if current_order == '-id' %}selected{% endif %}>题号降序</option>
+                    <option value="difficulty" {% if current_order == 'difficulty' %}selected{% endif %}>难度升序</option>
+                    <option value="-difficulty" {% if current_order == '-difficulty' %}selected{% endif %}>难度降序</option>
+                    <option value="-acceptance" {% if current_order == '-acceptance' %}selected{% endif %}>通过数降序</option>
+                    <option value="acceptance" {% if current_order == 'acceptance' %}selected{% endif %}>通过数升序</option>
+                </select>
+            </div>
+            
+            <!-- 搜索 -->
+            <div class="col-md-3">
+                <label class="form-label"><i class="bi bi-search"></i> 搜索</label>
+                <input type="text" name="search" class="form-control" 
+                       placeholder="题号或标题" value="{{ search_query }}">
+            </div>
+            
+            <div class="col-md-1 d-flex align-items-end">
+                <button type="submit" class="btn btn-primary w-100">
+                    <i class="bi bi-search"></i>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- 题目列表 -->
+<div class="card">
+    <div class="table-responsive">
+        <table class="table table-hover mb-0">
+            <thead class="table-light">
+                <tr>
+                    {% if user.is_authenticated %}
+                    <th style="width: 50px;"></th>
+                    {% endif %}
+                    <th style="width: 80px;">题号</th>
+                    <th>标题</th>
+                    <th style="width: 100px;">难度</th>
+                    <th style="width: 200px;">标签</th>
+                    <th style="width: 150px;">通过/提交</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for problem in page_obj %}
+                <tr>
+                    {% if user.is_authenticated %}
+                    <td class="text-center">
+                        {% if problem.id in solved_problem_ids %}
+                            <i class="bi bi-check-circle-fill text-success" title="已解决"></i>
+                        {% elif problem.id in attempted_problem_ids %}
+                            <i class="bi bi-dash-circle-fill text-warning" title="尝试过"></i>
+                        {% else %}
+                            <i class="bi bi-circle text-muted" title="未尝试"></i>
+                        {% endif %}
+                    </td>
+                    {% endif %}
+                    <td class="text-muted">#{{ problem.id }}</td>
+                    <td>
+                        <a href="{% url 'problems:problem_detail' problem.id %}" 
+                           class="text-decoration-none fw-bold">
+                            {{ problem.title }}
+                        </a>
+                    </td>
+                    <td>
+                        <span class="badge bg-{{ problem.difficulty_color }}">
+                            {{ problem.get_difficulty_display }}
+                        </span>
+                    </td>
+                    <td>
+                        {% for tag in problem.tags.all %}
+                        <span class="badge bg-{{ tag.color }} me-1">{{ tag.name }}</span>
+                        {% endfor %}
+                    </td>
+                    <td>
+                        <small>
+                            <span class="{% if problem.acceptance_rate >= 50 %}text-success{% elif problem.acceptance_rate >= 30 %}text-warning{% else %}text-danger{% endif %} fw-bold">
+                                {{ problem.acceptance_rate }}%
+                            </span>
+                            <span class="text-muted">
+                                ({{ problem.total_accepted }}/{{ problem.total_submit }})
+                            </span>
+                        </small>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="{% if user.is_authenticated %}6{% else %}5{% endif %}" class="text-center text-muted py-5">
+                        <i class="bi bi-inbox display-4"></i>
+                        <p class="mt-3">未找到符合条件的题目</p>
+                        <a href="{% url 'problems:problem_list' %}" class="btn btn-outline-primary">
+                            查看所有题目
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    
+    <!-- 分页 -->
+    {% if page_obj.has_other_pages %}
+    <div class="card-footer">
+        <nav aria-label="题目列表分页">
+            <ul class="pagination justify-content-center mb-0">
+                {% if page_obj.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page=1{% if current_difficulty %}&difficulty={{ current_difficulty }}{% endif %}{% if current_tag %}&tag={{ current_tag }}{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}{% if current_order %}&order_by={{ current_order }}{% endif %}{% if current_status %}&status={{ current_status }}{% endif %}">
+                            首页
+                        </a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if current_difficulty %}&difficulty={{ current_difficulty }}{% endif %}{% if current_tag %}&tag={{ current_tag }}{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}{% if current_order %}&order_by={{ current_order }}{% endif %}{% if current_status %}&status={{ current_status }}{% endif %}">
+                            上一页
+                        </a>
+                    </li>
+                {% else %}
+                    <li class="page-item disabled">
+                        <span class="page-link">首页</span>
+                    </li>
+                    <li class="page-item disabled">
+                        <span class="page-link">上一页</span>
+                    </li>
+                {% endif %}
+                
+                <li class="page-item active">
+                    <span class="page-link">
+                        第 {{ page_obj.number }} / {{ page_obj.paginator.num_pages }} 页
+                    </span>
+                </li>
+                
+                {% if page_obj.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if current_difficulty %}&difficulty={{ current_difficulty }}{% endif %}{% if current_tag %}&tag={{ current_tag }}{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}{% if current_order %}&order_by={{ current_order }}{% endif %}{% if current_status %}&status={{ current_status }}{% endif %}">
+                            下一页
+                        </a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if current_difficulty %}&difficulty={{ current_difficulty }}{% endif %}{% if current_tag %}&tag={{ current_tag }}{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}{% if current_order %}&order_by={{ current_order }}{% endif %}{% if current_status %}&status={{ current_status }}{% endif %}">
+                            末页
+                        </a>
+                    </li>
+                {% else %}
+                    <li class="page-item disabled">
+                        <span class="page-link">下一页</span>
+                    </li>
+                    <li class="page-item disabled">
+                        <span class="page-link">末页</span>
+                    </li>
+                {% endif %}
+            </ul>
+        </nav>
+    </div>
+    {% endif %}
+</div>
+
+<style>
+.bi-check-circle-fill { font-size: 1.2rem; }
+.bi-dash-circle-fill { font-size: 1.2rem; }
+.bi-circle { font-size: 1.2rem; }
+</style>
+{% endblock %}
