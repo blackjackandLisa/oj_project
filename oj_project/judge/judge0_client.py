@@ -18,8 +18,8 @@ class Judge0Client:
     }
     
     def __init__(self):
-        self.base_url = settings.JUDGE_SERVER_URL
-        self.token = settings.JUDGE_TOKEN
+        self.base_url = getattr(settings, 'JUDGE_SERVER_URL', 'http://judge0-server:2358')
+        self.token = getattr(settings, 'JUDGE_TOKEN', '')
         self.headers = {
             'Content-Type': 'application/json',
         }

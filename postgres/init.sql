@@ -1,14 +1,20 @@
 -- PostgreSQL初始化脚本
 -- 创建数据库和用户（如果不存在）
 
--- 创建数据库
+-- 创建主数据库
 CREATE DATABASE oj_database;
+
+-- 创建Judger0数据库
+CREATE DATABASE judge0;
 
 -- 创建用户
 CREATE USER oj_user WITH PASSWORD 'oj_password_2024';
 
--- 授权
+-- 授权主数据库
 GRANT ALL PRIVILEGES ON DATABASE oj_database TO oj_user;
+
+-- 授权Judger0数据库
+GRANT ALL PRIVILEGES ON DATABASE judge0 TO oj_user;
 
 -- 设置默认权限
 ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO oj_user;

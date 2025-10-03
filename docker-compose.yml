@@ -125,12 +125,28 @@ services:
       - POSTGRES_DB=judge0
       - POSTGRES_USER=oj_user
       - POSTGRES_PASSWORD=oj_password_2024
+      - WORKERS_COUNT=2
+      - GRACEFUL_TIMEOUT=30
+      - MAX_CPU_TIME=15
+      - MAX_REAL_TIME=20
+      - MAX_MEMORY=512000
+      - MAX_OUTPUT_SIZE=1048576
+      - MAX_PROCESSES_AND_THREADS=60
+      - ENABLE_NETWORK=false
+      - ENABLE_DOCKER=true
+      - ENABLE_PRIVILEGED_CONTAINERS=false
     depends_on:
       - db
       - redis
     networks:
       - oj_network
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:2358/system_info"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
 
   # Judger0 Workers
   judge0-workers:
@@ -149,6 +165,10 @@ services:
       - POSTGRES_DB=judge0
       - POSTGRES_USER=oj_user
       - POSTGRES_PASSWORD=oj_password_2024
+      - WORKERS_COUNT=4
+      - MAX_CPU_TIME=15
+      - MAX_REAL_TIME=20
+      - MAX_MEMORY=512000
     depends_on:
       - db
       - redis
