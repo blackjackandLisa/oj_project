@@ -52,8 +52,8 @@ create_env_config() {
         cat > .env.prod << EOF
 # 快速部署配置
 DEBUG=0
-SECRET_KEY=django-insecure-quick-deploy-key-change-in-production
-ALLOWED_HOSTS=localhost,127.0.0.1,0.0.0.0
+SECRET_KEY=django-insecure-quick-deploy-key-change-in-production-$(date +%s)
+ALLOWED_HOSTS=localhost,127.0.0.1,0.0.0.0,$(hostname -I | awk '{print $1}')
 CORS_ALLOWED_ORIGINS=http://localhost:3000
 
 # 数据库配置
@@ -65,8 +65,14 @@ POSTGRES_PASSWORD=oj_password_2024
 REDIS_PASSWORD=redis_password_2024
 
 # 判题系统配置
-JUDGE_METHOD=traditional
-DOCKER_JUDGE_ENABLED=False
+JUDGE_METHOD=docker
+DOCKER_JUDGE_ENABLED=True
+DOCKER_PYTHON_IMAGE=oj-python-judge
+DOCKER_CPP_IMAGE=oj-cpp-judge
+
+# Judger0配置（备用）
+JUDGE_SERVER_URL=http://judge0-server:2358
+JUDGE_TOKEN=
 
 # 域名配置
 DOMAIN_NAME=localhost
